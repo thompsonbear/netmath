@@ -18,6 +18,10 @@ func getHostRange(na netip.Addr, ba netip.Addr, short bool) string {
 		return "Not Supported"
 	}
 
+	if ba.Prev().Less(na.Next()) {
+		return "None"
+	}
+
 	if(!short){
 		return na.Next().String() + "-" + ba.Prev().String()
 	}
@@ -50,7 +54,7 @@ type options struct{
 	listAll bool
 }
 
-func printNetworks(s snet.Subnet, opts options) {
+func printSubnetTable(s snet.Subnet, opts options) {
 	colHeaders := []string{"Subnet", "Network", "Useable Hosts", "Broadcast", "Mask"}
 
 	if(opts.showCount){
@@ -95,7 +99,7 @@ func printNetworks(s snet.Subnet, opts options) {
 		mask, _ := subnet.Mask()
 		hostRange := getHostRange(na, ba, opts.shortRange)
 		
-		cols := []string{s.String(), na.String(), hostRange, ba.String(), mask.String()}
+		cols := []string{subnet.String(), na.String(), hostRange, ba.String(), mask.String()}
 
 		if opts.showCount {
 			c, err := subnet.Count()
@@ -104,7 +108,12 @@ func printNetworks(s snet.Subnet, opts options) {
 				cols = append(cols, "Error")
 			} else {
 				cols = append(cols, strconv.Itoa(c)) // Total Hosts
-				cols = append(cols, strconv.Itoa(c - 2)) // Usable Hosts
+
+				if c >= 2 {
+					cols = append(cols, strconv.Itoa(c - 2)) // Usable Hosts
+				} else {
+					cols = append(cols, "0")
+				}
 			}
 		}
 		t.Row(cols...)
@@ -113,24 +122,21 @@ func printNetworks(s snet.Subnet, opts options) {
 }
 
 func main() {
+
 	var help bool
-
-	var listAll bool
-	var borderless bool
-	var showCount bool
-	var shortRange bool
+	opts := options{}
 	
-	flag.BoolVar(&listAll, "a", false, "Display ALL possible networks within the specified subnet.")
-	flag.BoolVar(&listAll, "all", false, "")
+	flag.BoolVar(&opts.listAll, "a", false, "Display ALL possible networks within the specified subnet.")
+	flag.BoolVar(&opts.listAll, "all", false, "")
 
-	flag.BoolVar(&borderless, "b", false, "Display with a BORDERLESS table.")
-	flag.BoolVar(&borderless, "borderless", false, "")
+	flag.BoolVar(&opts.borderless, "b", false, "Display with a BORDERLESS table.")
+	flag.BoolVar(&opts.borderless, "borderless", false, "")
 
-	flag.BoolVar(&showCount, "c", false, "Display ip ranges with host count.")
-	flag.BoolVar(&showCount, "count", false, "")
+	flag.BoolVar(&opts.showCount, "c", false, "Display ip ranges with host count.")
+	flag.BoolVar(&opts.showCount, "count", false, "")
 
-	flag.BoolVar(&shortRange, "s", false, "Display ip ranges shorthand/abbreviated notation.")
-	flag.BoolVar(&shortRange, "short", false, "")
+	flag.BoolVar(&opts.shortRange, "s", false, "Display ip ranges shorthand/abbreviated notation.")
+	flag.BoolVar(&opts.shortRange, "short", false, "")
 	
 	flag.BoolVar(&help, "h", false, "Display help message")
 	flag.BoolVar(&help, "help", false, "")
@@ -157,7 +163,7 @@ func main() {
 			input = append(input, args[i])
 		}
 	}
-	var s snet.Subnet
+	var s *snet.Subnet
 	var parseErr error
 	if len(input) == 1  {
 		s, parseErr = snet.ParseCIDR(input[0])
@@ -166,8 +172,9 @@ func main() {
 	}
 	if parseErr != nil {
 		fmt.Println(parseErr)
+		return
 	}
 
-	opts := options{borderless, showCount, shortRange, listAll}
-	printNetworks(s, opts)
+	
+	printSubnetTable(*s, opts)
 }
