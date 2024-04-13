@@ -11,33 +11,34 @@ type Subnet struct {
 	netip.Prefix
 }
 
-func New(p netip.Prefix) Subnet {
-	return Subnet{Prefix: p}
+func NewSubnet(p netip.Prefix) *Subnet {
+	return &Subnet{Prefix: p}
 }
 
-func Parse(addrStr string, maskStr string) (Subnet, error){
+func Parse(addrStr string, maskStr string) (*Subnet, error){
 	addr, err := netip.ParseAddr(addrStr)
 	if err != nil {
-		return Subnet{}, fmt.Errorf("invalid host address")
+		return &Subnet{}, fmt.Errorf("invalid host address")
 	}
 
+	//TODO: validate mask sequential
 	mask, err := netip.ParseAddr(maskStr)
 	if err != nil {
-		return Subnet{}, fmt.Errorf("invalid subnet mask")
+		return &Subnet{}, fmt.Errorf("invalid subnet mask")
 	}
 
 	maskBits, _ := addrToBits(mask)
 	p := netip.PrefixFrom(addr, maskBits)
 
-	return Subnet{Prefix: p}, nil
+	return &Subnet{Prefix: p}, nil
 }
 
-func ParseCIDR(s string) (Subnet, error) {
+func ParseCIDR(s string) (*Subnet, error) {
 	p, err := netip.ParsePrefix(s)
 	if err != nil {
-		return Subnet{}, fmt.Errorf("invalid ip prefix")
+		return &Subnet{}, fmt.Errorf("invalid ip prefix")
 	}
-	return Subnet{Prefix: p}, nil
+	return &Subnet{Prefix: p}, nil
 }
 
 // network mask of the network
@@ -120,7 +121,7 @@ func (s Subnet) All() ([]Subnet){
 	mask, _ := s.Mask()
 	maskBytes := mask.AsSlice()
 	
-	var nBytes []byte // network bytes
+	var netBytes []byte
 	var step int
 
 	for i := 0; i < len(maskBytes); i++ {
@@ -128,21 +129,21 @@ func (s Subnet) All() ([]Subnet){
 			step = 256 - int(maskBytes[i])
 			break
 		} else {
-			nBytes = append(nBytes, addrBytes[i])
+			netBytes = append(netBytes, addrBytes[i])
 		}
 	}
 
-	var prefixes []Subnet
+	var subnets []Subnet
 	for j := 0; j < 255; j += step {
-		tempBytes := nBytes
+		tempBytes := netBytes
 		tempBytes = append(tempBytes, byte(j))
 
 		tempBytes = fillEmptyBytes(tempBytes, addr.Is4())
 		tempAddr, _ := netip.AddrFromSlice(tempBytes)
 		
-		prefixes = append(prefixes, New(netip.PrefixFrom(tempAddr, s.Bits())))
+		subnets = append(subnets, *NewSubnet(netip.PrefixFrom(tempAddr, s.Bits())))
 	}
 
-	return prefixes
+	return subnets
 }
 
