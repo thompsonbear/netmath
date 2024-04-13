@@ -1,16 +1,173 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/netip"
+	"strconv"
+	"strings"
 
 	"github.com/thompsonbear/snet"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
-func main(){
-	prefix,_ := netip.ParsePrefix("172.21.20.10/24")
+func getHostRange(na netip.Addr, ba netip.Addr, short bool) string {
+	if(!na.Is4() && short){
+		return "Not Supported"
+	}
 
-	s := snet.New(prefix)
+	if(!short){
+		return na.Next().String() + "-" + ba.Prev().String()
+	}
+	firstHost := na.Next().AsSlice()
+	lastHost := ba.Prev().AsSlice()
 
-	fmt.Println(s.Mask())
+	var hostRange string
+
+	for i := 0; i < len(firstHost); i++ {
+		if(firstHost[i] == lastHost[i]){
+			hostRange += strconv.Itoa(int(firstHost[i]))
+		} else if (firstHost[i] < lastHost[i]){
+			hostRange += strconv.Itoa(int(firstHost[i])) + "-" + strconv.Itoa(int(lastHost[i]))
+		} else {
+			return "None"
+		}
+
+		if(i < len(firstHost) - 1) {
+			hostRange += "."
+		}
+	}
+
+	return hostRange
+}
+
+type options struct{
+	borderless bool 
+	showCount bool
+	shortRange bool
+	listAll bool
+}
+
+func printNetworks(s snet.Subnet, opts options) {
+	colHeaders := []string{"Subnet", "Network", "Useable Hosts", "Broadcast", "Mask"}
+
+	if(opts.showCount){
+		colHeaders = append(colHeaders, "Total Count")
+		colHeaders = append(colHeaders, "Useable Count")
+	}
+
+	t := table.New().
+	BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("12"))).
+	StyleFunc(func(row, col int) lipgloss.Style {
+		switch {
+			case row == 0:
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Bold(true).PaddingRight(1).PaddingLeft(1)
+			case row % 2 != 0:
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("15")).PaddingRight(1).PaddingLeft(1)
+			default: 
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("7")).PaddingRight(1).PaddingLeft(1)
+		}
+	}).Headers(colHeaders...)
+
+	if(opts.borderless){
+		t.BorderTop(false).
+		BorderBottom(false).
+		BorderLeft(false).
+		BorderRight(false).
+		BorderRow(false).
+		BorderColumn(false).
+		BorderHeader(false)
+	}
+
+	var subnets []snet.Subnet
+	if opts.listAll {
+		subnets = s.All()
+	} else {
+		subnets = make([]snet.Subnet, 0, 1)
+		subnets = append(subnets, s)
+	}
+
+	for _, subnet := range subnets {
+		na, _ := subnet.Network()
+		ba, _ := subnet.Broadcast()
+		mask, _ := subnet.Mask()
+		hostRange := getHostRange(na, ba, opts.shortRange)
+		
+		cols := []string{s.String(), na.String(), hostRange, ba.String(), mask.String()}
+
+		if opts.showCount {
+			c, err := subnet.Count()
+			if err != nil {
+				cols = append(cols, "Error")
+				cols = append(cols, "Error")
+			} else {
+				cols = append(cols, strconv.Itoa(c)) // Total Hosts
+				cols = append(cols, strconv.Itoa(c - 2)) // Usable Hosts
+			}
+		}
+		t.Row(cols...)
+	}
+	fmt.Println(t)
+}
+
+func main() {
+	var help bool
+
+	var listAll bool
+	var borderless bool
+	var showCount bool
+	var shortRange bool
+	
+	flag.BoolVar(&listAll, "a", false, "Display ALL possible networks within the specified subnet.")
+	flag.BoolVar(&listAll, "all", false, "")
+
+	flag.BoolVar(&borderless, "b", false, "Display with a BORDERLESS table.")
+	flag.BoolVar(&borderless, "borderless", false, "")
+
+	flag.BoolVar(&showCount, "c", false, "Display ip ranges with host count.")
+	flag.BoolVar(&showCount, "count", false, "")
+
+	flag.BoolVar(&shortRange, "s", false, "Display ip ranges shorthand/abbreviated notation.")
+	flag.BoolVar(&shortRange, "short", false, "")
+	
+	flag.BoolVar(&help, "h", false, "Display help message")
+	flag.BoolVar(&help, "help", false, "")
+	
+	flag.Parse()
+	args := flag.Args()
+		
+	if(help || len(args) == 0){
+		cmdstyle := lipgloss.NewStyle().Foreground(lipgloss.Color("12")).PaddingLeft(2)
+		orstyle := lipgloss.NewStyle().PaddingLeft(4)
+		fmt.Println("Usage:")
+		fmt.Println(cmdstyle.Render("snet <options> <host-address> <subnet-mask>"))
+		fmt.Println(orstyle.Render("or"))
+		fmt.Println(cmdstyle.Render("snet <options> <host-address>/<mask-bits>"))
+		fmt.Println("\nOptions:")
+		flag.PrintDefaults()
+		return
+	}
+
+	var input []string
+
+	for i:= 0; i < len(args); i++ {
+		if !strings.HasPrefix(args[i], "-") {
+			input = append(input, args[i])
+		}
+	}
+	var s snet.Subnet
+	var parseErr error
+	if len(input) == 1  {
+		s, parseErr = snet.ParseCIDR(input[0])
+	} else if len(input) > 1  {
+		s, parseErr = snet.Parse(input[0], input[1])
+	}
+	if parseErr != nil {
+		fmt.Println(parseErr)
+	}
+
+	opts := options{borderless, showCount, shortRange, listAll}
+	printNetworks(s, opts)
 }
