@@ -15,6 +15,31 @@ func New(p netip.Prefix) Subnet {
 	return Subnet{Prefix: p}
 }
 
+func Parse(addrStr string, maskStr string) (Subnet, error){
+	addr, err := netip.ParseAddr(addrStr)
+	if err != nil {
+		return Subnet{}, fmt.Errorf("invalid host address")
+	}
+
+	mask, err := netip.ParseAddr(maskStr)
+	if err != nil {
+		return Subnet{}, fmt.Errorf("invalid subnet mask")
+	}
+
+	maskBits, _ := addrToBits(mask)
+	p := netip.PrefixFrom(addr, maskBits)
+
+	return Subnet{Prefix: p}, nil
+}
+
+func ParseCIDR(s string) (Subnet, error) {
+	p, err := netip.ParsePrefix(s)
+	if err != nil {
+		return Subnet{}, fmt.Errorf("invalid ip prefix")
+	}
+	return Subnet{Prefix: p}, nil
+}
+
 // network mask of the network
 func (s Subnet) Mask() (netip.Addr, error) {
 	addr := s.Addr()
@@ -65,7 +90,7 @@ func (s Subnet) Broadcast() (netip.Addr, error) {
 }
 
 //TODO: Support extra extra large IPv6 counts
-func (s Subnet) HostsCount() (int, error) {
+func (s Subnet) Count() (int, error) {
 	addr := s.Addr()
 	bits := s.Bits()
 
@@ -82,13 +107,13 @@ func (s Subnet) HostsCount() (int, error) {
 		return 0, fmt.Errorf("invalid address")
 	}
 
-	hosts := math.Pow(2, float64(hostBits)) - 2
+	hosts := math.Pow(2, float64(hostBits))
 
 	return int(hosts), nil
 }
 
 
-func (s Subnet) All() ([]Subnet, error){
+func (s Subnet) All() ([]Subnet){
 	addr := s.Addr()
 	addrBytes := addr.AsSlice()
 	
@@ -118,6 +143,6 @@ func (s Subnet) All() ([]Subnet, error){
 		prefixes = append(prefixes, New(netip.PrefixFrom(tempAddr, s.Bits())))
 	}
 
-	return prefixes, nil
+	return prefixes
 }
 

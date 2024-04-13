@@ -63,18 +63,18 @@ func fillEmptyBytes(b []byte, ipv4 bool) []byte {
 	return b
 }
 
-// func addrToBits(addr netip.Addr) (int, error) {
-// 	addrBytes := addr.AsSlice()
+func addrToBits(addr netip.Addr) (int, error) {
+	addrBytes := addr.AsSlice()
 
-//     bits := 0
-//     for _, b := range addrBytes {
-//         // Count the number of set bits in each byte
-//         for mask := byte(0x80); mask != 0; mask >>= 1 {
-//             if b&mask != 0 {
-//                 bits++
-//             }
-//         }
-//     }
+    bits := 0
+    for _, b := range addrBytes {
+        // Count the number of set bits in each byte
+        for mask := byte(0x80); mask != 0; mask >>= 1 {
+            if b&mask != 0 {
+                bits++
+            }
+        }
+    }
 
-//     return bits, nil
-// }
+    return bits, nil
+}
