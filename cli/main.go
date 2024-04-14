@@ -107,10 +107,10 @@ func printSubnetTable(s snet.Subnet, opts options) {
 				cols = append(cols, "Error")
 				cols = append(cols, "Error")
 			} else {
-				cols = append(cols, strconv.Itoa(c)) // Total Hosts
+				cols = append(cols, strconv.FormatFloat(c, 'g', -1, 64)) // Total Hosts
 
 				if c >= 2 {
-					cols = append(cols, strconv.Itoa(c - 2)) // Usable Hosts
+					cols = append(cols, strconv.FormatFloat(c-2, 'g', -1, 64)) // Usable Hosts
 				} else {
 					cols = append(cols, "0")
 				}
@@ -163,7 +163,7 @@ func main() {
 			input = append(input, args[i])
 		}
 	}
-	var s *snet.Subnet
+	var s snet.Subnet
 	var parseErr error
 	if len(input) == 1  {
 		s, parseErr = snet.ParseCIDR(input[0])
@@ -176,5 +176,5 @@ func main() {
 	}
 
 	
-	printSubnetTable(*s, opts)
+	printSubnetTable(s, opts)
 }
