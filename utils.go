@@ -13,7 +13,7 @@ func bitsToMask(bits int, is4 bool) (netip.Addr, error) {
 
 	var ip net.IP
 	var addr netip.Addr
-
+	//TODO: Handle this internally?
 	if(bits <= 32 && is4) {
 		mask := net.CIDRMask(bits, 32)
 		ip = net.IP(mask).To4()
@@ -25,16 +25,21 @@ func bitsToMask(bits int, is4 bool) (netip.Addr, error) {
 	return addr, nil
 }
 
-func addrToBits(addr netip.Addr) (int, error) {
-	addrBytes := addr.AsSlice()
+func maskToBits(mask netip.Addr) (int, error) {
+	maskBytes := mask.AsSlice()
 
     bits := 0
-    for _, b := range addrBytes {
+	ended := false
+    for _, b := range maskBytes {
         // Count the number of set bits in each byte
-        for mask := byte(0x80); mask != 0; mask >>= 1 {
-            if b&mask != 0 {
-                bits++
-            }
+        for m := byte(0x80); m != 0; m >>= 1 {
+			if b&m != 0 && ended {
+				return 0, fmt.Errorf("invalid subnet mask")
+			} else if b&m != 0 {
+				bits++
+			} else {
+				ended = true
+			}
         }
     }
 

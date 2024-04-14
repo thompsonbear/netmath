@@ -11,13 +11,22 @@ func TestParse(t *testing.T){
 		want string
 	}{
 		{addr: "0.0.0.0", mask: "0.0.0.0", want: "0.0.0.0/0"},
-		{addr: "172.23.14.10", mask: "255.255.254.0", want: "172.23.14.10/23"},
-		{addr: "172.23.14.10", mask: "255.255.251.0", want: "172.23.14.10/23"},
+		{addr: "255.255.255.255", mask: "255.255.255.255", want: "255.255.255.255/32"},
+		{addr: "255.255.255.256", mask: "255.255.255.255", want: "invalid host address"},
+		{addr: "192.168.0.0", mask: "255.255.254.0", want: "192.168.0.0/23"},
+		{addr: "172.23.14.10", mask: "255.255.251.0", want: "invalid subnet mask"},
+		{addr: "172.23.14.1000", mask: "255.255.254.0", want: "invalid host address"},
+		{addr: "172.23.-14.10", mask: "255.255.254.0", want: "invalid host address"},
 	}
 
 	for _, test := range parseTests {
-		s, _ := Parse(test.addr, test.mask)
-		if s.String() != test.want {
+		s, err := Parse(test.addr, test.mask)
+
+		if err != nil {
+			if err.Error() != test.want {
+				t.Error("Error parsing", test.addr,"and", test.mask, "Expected:", test.want, "Got:", s.String(), "With Error:", err)
+			}
+		} else if s.String() != test.want {
 			t.Error("Error parsing", test.addr,"and", test.mask, "Expected:", test.want, "Got:", s.String())
 		}
 	}

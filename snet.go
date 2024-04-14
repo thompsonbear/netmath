@@ -27,7 +27,10 @@ func Parse(addrStr string, maskStr string) (Subnet, error){
 		return Subnet{}, fmt.Errorf("invalid subnet mask")
 	}
 
-	maskBits, _ := addrToBits(mask)
+	maskBits, err := maskToBits(mask)
+	if err != nil {
+		return Subnet{}, fmt.Errorf("invalid subnet mask")
+	}
 	p := netip.PrefixFrom(addr, maskBits)
 
 	return Subnet{Prefix: p}, nil
