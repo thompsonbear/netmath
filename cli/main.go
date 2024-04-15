@@ -87,7 +87,7 @@ func printSubnetTable(s snet.Subnet, opts options) {
 
 	var subnets []snet.Subnet
 	if opts.listAll {
-		subnets = s.All()
+		subnets = s.ListAll()
 	} else {
 		subnets = make([]snet.Subnet, 0, 1)
 		subnets = append(subnets, s)

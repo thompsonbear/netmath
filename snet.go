@@ -14,14 +14,13 @@ type Subnet struct {
 func NewSubnet(p netip.Prefix) Subnet {
 	return Subnet{Prefix: p}
 }
-
+// Parse an IP and Subnet Mask in the long <ip-address>, <subnet-mask> format
 func Parse(addrStr string, maskStr string) (Subnet, error){
 	addr, err := netip.ParseAddr(addrStr)
 	if err != nil {
 		return Subnet{}, fmt.Errorf("invalid host address")
 	}
 
-	//TODO: validate mask sequential
 	mask, err := netip.ParseAddr(maskStr)
 	if err != nil {
 		return Subnet{}, fmt.Errorf("invalid subnet mask")
@@ -36,10 +35,11 @@ func Parse(addrStr string, maskStr string) (Subnet, error){
 	return Subnet{Prefix: p}, nil
 }
 
+// Parse an abbreviated IP and Subnet mask in the <ip-address>/<bits> format
 func ParseCIDR(s string) (Subnet, error) {
 	p, err := netip.ParsePrefix(s)
 	if err != nil {
-		return Subnet{}, fmt.Errorf("invalid ip prefix")
+		return Subnet{}, fmt.Errorf("invalid subnet")
 	}
 	return Subnet{Prefix: p}, nil
 }
@@ -116,7 +116,7 @@ func (s Subnet) Count() (float64, error) {
 }
 
 
-func (s Subnet) All() ([]Subnet){
+func (s Subnet) ListAll() ([]Subnet){
 	addr := s.Addr()
 	addrBytes := addr.AsSlice()
 	
