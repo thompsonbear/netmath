@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"flag"
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/thompsonbear/snet"
+	"github.com/thompsonbear/netmath"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
@@ -54,7 +54,7 @@ type options struct{
 	listAll bool
 }
 
-func printSubnetTable(s snet.Subnet, opts options) {
+func printSubnetTable(s netmath.Subnet, opts options) {
 	colHeaders := []string{"Subnet", "Network", "Useable Hosts", "Broadcast", "Mask"}
 
 	if(opts.showCount){
@@ -85,11 +85,11 @@ func printSubnetTable(s snet.Subnet, opts options) {
 		BorderHeader(false)
 	}
 
-	var subnets []snet.Subnet
+	var subnets []netmath.Subnet
 	if opts.listAll {
 		subnets = s.ListAll()
 	} else {
-		subnets = make([]snet.Subnet, 0, 1)
+		subnets = make([]netmath.Subnet, 0, 1)
 		subnets = append(subnets, s)
 	}
 
@@ -163,12 +163,12 @@ func main() {
 			input = append(input, args[i])
 		}
 	}
-	var s snet.Subnet
+	var s netmath.Subnet
 	var parseErr error
 	if len(input) == 1  {
-		s, parseErr = snet.ParseCIDR(input[0])
+		s, parseErr = netmath.ParseCIDR(input[0])
 	} else if len(input) > 1  {
-		s, parseErr = snet.Parse(input[0], input[1])
+		s, parseErr = netmath.Parse(input[0], input[1])
 	}
 	if parseErr != nil {
 		fmt.Println(parseErr)

@@ -1,4 +1,4 @@
-package snet
+package netmath
 
 import (
 	"testing"
@@ -317,7 +317,36 @@ func TestBroadcast(t *testing.T) {
 }
 
 func TestListAll(t *testing.T){
+	listTests := []struct{
+		snet string
+		want []string
+	}{
+		{snet: "192.168.20.15/23", want: []string{"192.168.0.0/23"}},
+		{snet: "192.168.21.200/23", want: []string{"192.168.0.0/23"}},
+		{snet: "10.0.0.0/8", want: []string{"192.168.0.0/23"}},
+        {snet: "172.16.0.0/16", want: []string{"192.168.0.0/23"}},
+        {snet: "192.168.0.0/24", want: []string{"192.168.0.0/23"}},
+		{snet: "10.255.255.255/8", want: []string{"192.168.0.0/23"}},
+        {snet: "172.16.255.255/16", want: []string{"192.168.0.0/23"}},
+        {snet: "192.168.0.255/24", want: []string{"192.168.0.0/23"}},
+        {snet: "255.255.255.255/1", want: []string{"192.168.0.0/23"}},
+        {snet: "255.255.255.255/32", want: []string{"192.168.0.0/23"}},
+		{snet: "::/128", want: []string{""}},
+		{snet: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128", want: []string{"192.168.0.0/23"}},
+		{snet: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/1", want: []string{"192.168.0.0/23"}},
+	}
 
+	for _, test := range listTests {
+		s, _ := ParseCIDR(test.snet)
+		list := s.ListAll()
+		for i := 0; i < len(list); i++ {
+			if list[i].String() != test.want[i] {
+				t.Error("Error getting .ListAll() for", test.snet, "Expected:", test.want[i], "Got:", list[i])
+			}
+		}
+
+		
+	}
 }
 
 func TestCount(t *testing.T){

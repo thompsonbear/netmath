@@ -1,4 +1,4 @@
-package snet
+package netmath
 
 import (
 	"fmt"
