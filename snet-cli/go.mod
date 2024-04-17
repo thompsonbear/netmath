@@ -1,4 +1,4 @@
-module github.com/netmath/cli
+module github.com/netmath/snet-cli
 
 go 1.22.2
 
