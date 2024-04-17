@@ -1,4 +1,4 @@
-# netmath CLI Tool
+# netmath cli tool - snet
 
 ## Installation
 
