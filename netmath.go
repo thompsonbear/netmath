@@ -14,8 +14,9 @@ type Subnet struct {
 func NewSubnet(p netip.Prefix) Subnet {
 	return Subnet{Prefix: p}
 }
+
 // Parse an IP and Subnet Mask in the long <ip-address>, <subnet-mask> format
-func Parse(addrStr string, maskStr string) (Subnet, error){
+func Parse(addrStr string, maskStr string) (Subnet, error) {
 	addr, err := netip.ParseAddr(addrStr)
 	if err != nil {
 		return Subnet{}, fmt.Errorf("invalid host address")
@@ -64,7 +65,7 @@ func (s Subnet) Network() (netip.Addr, error) {
 	if err != nil {
 		return netip.IPv4Unspecified(), err
 	}
-	
+
 	naBytes := getNetworkAddrBytes(addr.AsSlice(), mask.AsSlice())
 
 	na, ok := netip.AddrFromSlice(naBytes)
@@ -82,7 +83,7 @@ func (s Subnet) Broadcast() (netip.Addr, error) {
 	if err != nil {
 		return netip.IPv4Unspecified(), err
 	}
-	
+
 	baBytes := getBroadcastAddrBytes(addr.AsSlice(), mask.AsSlice())
 
 	ba, ok := netip.AddrFromSlice(baBytes)
@@ -97,14 +98,14 @@ func (s Subnet) Count() (float64, error) {
 	addr := s.Addr()
 	bits := s.Bits()
 
-	if (bits < 0 || bits > 128) {
+	if bits < 0 || bits > 128 {
 		return 0, fmt.Errorf("invalid bit length")
 	}
 
 	var hostBits int
-	if(addr.Is4()) {
+	if addr.Is4() {
 		hostBits = 32 - bits
-	} else if (addr.Is6()) {
+	} else if addr.Is6() {
 		hostBits = 128 - bits
 	} else {
 		return 0, fmt.Errorf("invalid address")
@@ -115,19 +116,18 @@ func (s Subnet) Count() (float64, error) {
 	return hosts, nil
 }
 
-
-func (s Subnet) ListAll() ([]Subnet){
+func (s Subnet) ListAll() []Subnet {
 	addr := s.Addr()
 	addrBytes := addr.AsSlice()
-	
+
 	mask, _ := s.Mask()
 	maskBytes := mask.AsSlice()
-	
+
 	var netBytes []byte
 	var step int
 
 	for i := 0; i < len(maskBytes); i++ {
-		if(maskBytes[i] < 255){
+		if maskBytes[i] < 255 {
 			step = 256 - int(maskBytes[i])
 			break
 		} else {
@@ -142,10 +142,9 @@ func (s Subnet) ListAll() ([]Subnet){
 
 		tempBytes = fillEmptyBytes(tempBytes, addr.Is4())
 		tempAddr, _ := netip.AddrFromSlice(tempBytes)
-		
+
 		subnets = append(subnets, NewSubnet(netip.PrefixFrom(tempAddr, s.Bits())))
 	}
 
 	return subnets
 }
-
