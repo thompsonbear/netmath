@@ -6,11 +6,12 @@ import (
 	"net/netip"
 )
 
-// network stuct based on netip.Prefix to add custom methods
+// Network stuct based on netip.Prefix to add custom methods
 type Subnet struct {
 	netip.Prefix
 }
 
+// Create a new Subnet from a netip.Prefix
 func NewSubnet(p netip.Prefix) Subnet {
 	return Subnet{Prefix: p}
 }
@@ -45,7 +46,7 @@ func ParseCIDR(s string) (Subnet, error) {
 	return Subnet{Prefix: p}, nil
 }
 
-// network mask of the network
+// Get the Network mask of the network
 func (s Subnet) Mask() (netip.Addr, error) {
 	addr := s.Addr()
 	bits := s.Bits()
@@ -58,7 +59,7 @@ func (s Subnet) Mask() (netip.Addr, error) {
 	return mask, nil
 }
 
-// network address of the network ex. 192.168.20.15/23 -> 192.168.20.0
+// Get the Network address of the network ex. 192.168.20.15/23 -> 192.168.20.0
 func (s Subnet) Network() (netip.Addr, error) {
 	addr := s.Addr()
 	mask, err := s.Mask()
@@ -76,7 +77,7 @@ func (s Subnet) Network() (netip.Addr, error) {
 	return na, nil
 }
 
-// broadcast address of the network ex. 192.168.20.15/23 -> 192.168.21.255
+// Get the Broadcast address of the network ex. 192.168.20.15/23 -> 192.168.21.255
 func (s Subnet) Broadcast() (netip.Addr, error) {
 	addr := s.Addr()
 	mask, err := s.Mask()
@@ -94,6 +95,7 @@ func (s Subnet) Broadcast() (netip.Addr, error) {
 	return ba, nil
 }
 
+// Count the number of total hosts in the subnet. (You can subtract two from the result for the usable hosts)
 func (s Subnet) Count() (float64, error) {
 	addr := s.Addr()
 	bits := s.Bits()
@@ -116,6 +118,7 @@ func (s Subnet) Count() (float64, error) {
 	return hosts, nil
 }
 
+// List all of the neighboring subnets that use the same mask
 func (s Subnet) ListAll() []Subnet {
 	addr := s.Addr()
 	addrBytes := addr.AsSlice()
