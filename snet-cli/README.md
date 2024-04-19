@@ -7,7 +7,7 @@
 ```Bash
 git clone https://github.com/thompsonbear/netmath
 cd /netmath/snet-cli
-go build -o snet main.go
+go build snet.go
 ```
 
 ## Usage
