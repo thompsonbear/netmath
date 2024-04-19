@@ -4,4 +4,4 @@ Helper functions and methods built on top of the net/netip standard Go libraries
 
 [netmath documentation](https://pkg.go.dev/github.com/thompsonbear/netmath)
 
-Use netmath from the CLI: [snet cli](/snet-cli)
+Use netmath from the CLI: [snet-cli](https://github.com/thompsonbear/snet-cli)
